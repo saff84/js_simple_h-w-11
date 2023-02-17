@@ -4,34 +4,31 @@ const urlGet = "https://students.netoservices.ru/nestjs-backend/poll",
     answers = document.querySelector(".poll__answers");
 
 
-let xhr = new XMLHttpRequest();
+let xhr = sendRequest();
 xhr.open("GET", urlGet);
 xhr.send();
 
-xhr.addEventListener("readystatechange", () => {
-    if (xhr.readyState === xhr.DONE) {
+xhr.onreadystatechange = function () {
+    if (xhr.readyState == 4 && xhr.status == 200) {
 
-        let a = JSON.parse(xhr.responseText),
-            val = a.data,
-            id = a.id,
+        let resp = xhr.response,
+            val = resp.data,
+            id = resp.id,
             arrAnswers = val.answers
 
         title.textContent = val.title
-        const button = document.createElement("button")
-        button.classList.add(".poll__answer")
 
         arrAnswers.forEach(el => {
-            answers.insertAdjacentHTML("beforeend", `
-            <button class="poll__answer">
-            ${el}
-          </button>
-            `)
+            const button = document.createElement("button")
+            button.classList.add("poll__answer")
+            button.textContent = el
+            answers.append(button)
 
         });
 
 
         const answer = document.querySelectorAll(".poll__answer"),
-            xhrP = new XMLHttpRequest;
+            xhrP = sendRequest()
         xhrP.open('POST', urlPost);
         xhrP.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
@@ -43,21 +40,24 @@ xhr.addEventListener("readystatechange", () => {
             })
         })
 
-        xhrP.addEventListener("readystatechange", () => {
-            if (xhrP.readyState === xhrP.DONE) {
-                let response = JSON.parse(xhrP.responseText),
-                    stastic = response.stat;
+        xhrP.onreadystatechange = function () {
+            if (xhrP.readyState == 4 && xhrP.status == 201) {
+                let response = xhrP.response,
+                    statistic = response.stat;
 
-                stastic.forEach(el => {
-                    title.insertAdjacentHTML("beforeend", `
-                    <p>
-                    ${el["answer"]}: ${el["votes"] / 100}%
-                  </p>
-                    `)
-
+                statistic.forEach(el => {
+                    const p = document.createElement("p")
+                    p.textContent = `${el["answer"]}: ${el["votes"] / 100}%`
+                    title.append(p)
                 });
             }
-        })
+        }
     }
-})
+}
 
+
+function sendRequest() {
+    let request = new XMLHttpRequest();
+    request.responseType = 'json';
+    return request
+}
